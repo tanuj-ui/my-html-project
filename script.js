@@ -1,7 +1,3 @@
-// Socket.io connection (optional - can be commented if not used)
-// const socket = io();
-
-// DOM Elements
 const contactList = document.getElementById('contactList');
 const searchInput = document.getElementById('searchContacts');
 const messageInput = document.getElementById('messageInput');
@@ -11,80 +7,71 @@ const currentChatUser = document.getElementById('currentChatUser');
 const userStatus = document.getElementById('userStatus');
 const typingIndicator = document.getElementById('typingIndicator');
 const darkModeToggle = document.getElementById('darkModeToggle');
+const aiPopup = document.getElementById('aiPopup');
+const aiMessages = document.getElementById('aiMessages');
+const aiInput = document.getElementById('aiInput');
+const aiSendBtn = document.getElementById('sendAIBtn');
 
-// Contact List
-const contacts = ["Achint", "Tarun", "Shubham", "Vishal", "Yashi", "Saloni", "Vivek"];
+const contacts = [
+  { name: "Achint", avatar: "https://randomuser.me/api/portraits/men/10.jpg" },
+  { name: "Tarun", avatar: "https://randomuser.me/api/portraits/men/11.jpg" },
+  { name: "Shubham", avatar: "https://randomuser.me/api/portraits/men/12.jpg" },
+  { name: "Vishal", avatar: "https://randomuser.me/api/portraits/men/13.jpg" },
+  { name: "Yashi", avatar: "https://randomuser.me/api/portraits/women/14.jpg" },
+  { name: "Saloni", avatar: "https://randomuser.me/api/portraits/women/15.jpg" },
+  { name: "Vivek", avatar: "https://randomuser.me/api/portraits/men/16.jpg" },
+];
 
 function loadContacts() {
   contactList.innerHTML = "";
-  contacts.forEach(contact => {
+  contacts.forEach(c => {
     const li = document.createElement('li');
-    li.textContent = contact;
-    li.classList.add('contact');
+    li.innerHTML = `<img src="${c.avatar}" class="profile-pic"><span>${c.name}</span>`;
     li.addEventListener('click', () => {
-      currentChatUser.textContent = contact;
-      userStatus.textContent = "Online";
+      currentChatUser.textContent = c.name;
+      userStatus.textContent = "🟢 Online";
       messages.innerHTML = "";
     });
     contactList.appendChild(li);
   });
 }
-loadContacts();
 
-// Send Message
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key === 'Enter') sendMessage();
 });
 
 function sendMessage() {
   const msg = messageInput.value.trim();
   if (!msg) return;
   const div = document.createElement('div');
-  div.classList.add('message', 'sent');
+  div.className = 'message sent';
   div.textContent = msg;
   messages.appendChild(div);
   messageInput.value = "";
   messages.scrollTop = messages.scrollHeight;
 }
 
-// Dark Mode Toggle
-darkModeToggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-});
-
-// AI Chat Elements
-const aiInput = document.getElementById('aiInput');
-const aiSendBtn = document.getElementById('sendAIBtn');
-const aiMessages = document.getElementById('aiMessages');
-
 aiSendBtn.addEventListener('click', sendAIMessage);
 aiInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendAIMessage();
-  }
+  if (e.key === 'Enter') sendAIMessage();
 });
 
 function sendAIMessage() {
-  const message = aiInput.value.trim();
-  if (!message) return;
+  const msg = aiInput.value.trim();
+  if (!msg) return;
 
-  const userMessage = document.createElement('div');
-  userMessage.classList.add('ai-msg', 'user-msg');
-  userMessage.textContent = message;
-  aiMessages.appendChild(userMessage);
+  const userDiv = document.createElement('div');
+  userDiv.className = 'message sent';
+  userDiv.textContent = msg;
+  aiMessages.appendChild(userDiv);
+
+  const botDiv = document.createElement('div');
+  botDiv.className = 'message received';
+  botDiv.textContent = "Typing...";
+  aiMessages.appendChild(botDiv);
 
   aiInput.value = '';
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-
-  const botMessage = document.createElement('div');
-  botMessage.classList.add('ai-msg', 'bot-msg');
-  botMessage.textContent = "Typing...";
-  aiMessages.appendChild(botMessage);
   aiMessages.scrollTop = aiMessages.scrollHeight;
 
   fetch("https://api-inference.huggingface.co/models/google/flan-t5-small", {
@@ -93,44 +80,31 @@ function sendAIMessage() {
       "Authorization": "Bearer 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",
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      inputs: message
-    })
+    body: JSON.stringify({ inputs: msg })
   })
   .then(res => res.json())
   .then(data => {
-    const output = data[0]?.generated_text || "Sorry, I didn't get that.";
-    botMessage.textContent = output;
+    botDiv.textContent = data[0]?.generated_text || "No reply.";
     aiMessages.scrollTop = aiMessages.scrollHeight;
   })
   .catch(() => {
-    botMessage.textContent = "AI not responding. Try again later.";
+    botDiv.textContent = "AI not available.";
   });
 }
 
-// Toggle AI Popup
 function toggleAI() {
-  document.getElementById('aiPopup').classList.toggle('show');
+  aiPopup.classList.toggle("show");
 }
 
-// Fake Call Buttons
-function startAudioCall() {
-  alert("📞 Audio call feature is coming soon!");
-}
-function startVideoCall() {
-  alert("🎥 Video call feature is coming soon!");
-}
-
-// Welcome Screen
-document.addEventListener("DOMContentLoaded", () => {
-  const enterBtn = document.getElementById("enterBtn");
-  const welcomeScreen = document.getElementById("welcomeScreen");
-  const chatApp = document.getElementById("chatApp");
-
-  if (enterBtn && welcomeScreen && chatApp) {
-    enterBtn.addEventListener("click", () => {
-      welcomeScreen.classList.add("hidden");
-      chatApp.classList.remove("hidden");
-    });
-  }
+darkModeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
 });
+
+// Welcome screen
+document.getElementById("enterBtn").addEventListener("click", () => {
+  document.getElementById("welcomeScreen").style.display = "none";
+  document.getElementById("chatApp").classList.remove("hidden");
+});
+
+// Init
+loadContacts();
